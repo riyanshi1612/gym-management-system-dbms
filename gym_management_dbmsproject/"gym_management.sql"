@@ -1,0 +1,198 @@
+-- =========================
+-- DATABASE SETUP
+-- =========================
+
+DROP DATABASE IF EXISTS GymDB;
+CREATE DATABASE GymDB;
+USE GymDB;
+
+-- =========================
+-- DDL (CREATE TABLES)
+-- =========================
+
+CREATE TABLE Member (
+    member_id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INT,
+    gender VARCHAR(10),
+    phone VARCHAR(15) UNIQUE
+);
+
+CREATE TABLE Trainer (
+    trainer_id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    specialization VARCHAR(50),
+    experience INT
+);
+
+CREATE TABLE Plan (
+    plan_id INT PRIMARY KEY,
+    plan_name VARCHAR(50) NOT NULL,
+    duration_months INT,
+    price DECIMAL(8,2)
+);
+
+CREATE TABLE Membership (
+    membership_id INT PRIMARY KEY,
+    member_id INT,
+    plan_id INT,
+    trainer_id INT,
+    start_date DATE,
+    end_date DATE,
+    FOREIGN KEY (member_id) REFERENCES Member(member_id),
+    FOREIGN KEY (plan_id) REFERENCES Plan(plan_id),
+    FOREIGN KEY (trainer_id) REFERENCES Trainer(trainer_id)
+);
+
+CREATE TABLE Payment (
+    payment_id INT PRIMARY KEY,
+    member_id INT,
+    amount DECIMAL(8,2),
+    payment_date DATE,
+    status VARCHAR(20),
+    FOREIGN KEY (member_id) REFERENCES Member(member_id)
+);
+
+-- =========================
+-- DML (INSERT DATA)
+-- =========================
+
+-- MEMBER
+INSERT INTO Member VALUES
+(1, 'Aman', 20, 'Male', '9876543210'),
+(2, 'Priya', 22, 'Female', '9876543211'),
+(3, 'Rahul', 25, 'Male', '9876543212'),
+(4, 'Sneha', 21, 'Female', '9876543213'),
+(5, 'Arjun', 23, 'Male', '9876543214');
+
+-- TRAINER
+INSERT INTO Trainer VALUES
+(101, 'Rohit', 'Cardio', 5),
+(102, 'Neha', 'Yoga', 4),
+(103, 'Amit', 'Weightlifting', 6),
+(104, 'Simran', 'Zumba', 3),
+(105, 'Karan', 'Crossfit', 7);
+
+-- PLAN
+INSERT INTO Plan VALUES
+(201, 'Basic', 1, 1000),
+(202, 'Standard', 3, 2500),
+(203, 'Premium', 6, 4500),
+(204, 'Annual', 12, 8000),
+(205, 'Student', 2, 1500);
+
+-- MEMBERSHIP
+INSERT INTO Membership VALUES
+(1, 1, 201, 101, '2026-01-01', '2026-02-01'),
+(2, 2, 202, 102, '2026-01-05', '2026-04-05'),
+(3, 3, 203, 103, '2026-02-01', '2026-08-01'),
+(4, 4, 204, 104, '2026-01-10', '2027-01-10'),
+(5, 5, 205, 105, '2026-02-15', '2026-04-15');
+
+-- PAYMENT
+INSERT INTO Payment VALUES
+(1, 1, 1000, '2026-01-01', 'Paid'),
+(2, 2, 2500, '2026-01-05', 'Paid'),
+(3, 3, 4500, '2026-02-01', 'Pending'),
+(4, 4, 8000, '2026-01-10', 'Paid'),
+(5, 5, 1500, '2026-02-15', 'Paid');
+
+-- =========================
+-- UPDATE & DELETE
+-- =========================
+
+UPDATE Member
+SET age = 24
+WHERE member_id = 1;
+
+DELETE FROM Payment
+WHERE payment_id = 3;
+
+-- =========================
+-- DQL (QUERIES)
+-- =========================
+
+-- BASIC QUERIES
+SELECT * FROM Member;
+
+SELECT * FROM Member WHERE age > 21;
+
+SELECT * FROM Member WHERE age > 20 AND gender = 'Male';
+
+SELECT * FROM Member WHERE age BETWEEN 20 AND 23;
+
+SELECT * FROM Member WHERE member_id IN (1,3,5);
+
+SELECT * FROM Member WHERE name LIKE 'A%';
+
+SELECT * FROM Member ORDER BY age DESC;
+
+-- AGGREGATE FUNCTIONS
+SELECT COUNT(*) AS total_members FROM Member;
+SELECT AVG(age) AS average_age FROM Member;
+SELECT MAX(age) AS max_age FROM Member;
+SELECT MIN(age) AS min_age FROM Member;
+SELECT SUM(price) AS total_price FROM Plan;
+
+-- GROUP BY
+SELECT gender, COUNT(*) AS total_members
+FROM Member
+GROUP BY gender;
+
+-- HAVING
+SELECT gender, COUNT(*) AS total_members
+FROM Member
+GROUP BY gender
+HAVING COUNT(*) > 1;
+
+-- INNER JOIN
+SELECT m.name, p.plan_name
+FROM Member m
+INNER JOIN Membership ms ON m.member_id = ms.member_id
+INNER JOIN Plan p ON ms.plan_id = p.plan_id;
+
+-- LEFT JOIN
+SELECT m.name, pay.amount
+FROM Member m
+LEFT JOIN Payment pay ON m.member_id = pay.member_id;
+
+-- RIGHT JOIN
+SELECT m.name, pay.amount
+FROM Member m
+RIGHT JOIN Payment pay ON m.member_id = pay.member_id;
+
+-- SELF JOIN
+SELECT A.name AS Member1, B.name AS Member2
+FROM Member A
+JOIN Member B
+ON A.gender = B.gender AND A.member_id <> B.member_id;
+
+-- SUBQUERIES
+SELECT name
+FROM Member
+WHERE age = (SELECT MAX(age) FROM Member);
+
+SELECT name
+FROM Member
+WHERE member_id IN (
+    SELECT member_id FROM Payment WHERE amount > 2000
+);
+
+-- =========================
+-- VIEW
+-- =========================
+
+CREATE VIEW Member_Plan_View AS
+SELECT m.name, p.plan_name
+FROM Member m
+JOIN Membership ms ON m.member_id = ms.member_id
+JOIN Plan p ON ms.plan_id = p.plan_id;
+
+SELECT * FROM Member_Plan_View;
+
+-- =========================
+-- INDEX
+-- =========================
+
+CREATE INDEX idx_member_name
+ON Member(name);
